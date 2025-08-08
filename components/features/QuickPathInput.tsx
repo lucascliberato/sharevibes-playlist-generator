@@ -1,0 +1,202 @@
+'use client'
+
+import { useState } from 'react'
+import { useApp, useCanProceed, useValidation } from '@/lib/app-context'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { MiniMixtapeCard } from '@/components/ui/MiniMixtapeCard'
+import { CONTEXT_CONFIGS, AVAILABLE_GENRES, POPULAR_GENRES } from '@/constants'
+import type { GenreType } from '@/types' // ✅ ADICIONADO: Import do tipo
+
+export function QuickPathInput() {
+  const { state, actions } = useApp()
+  const canProceed = useCanProceed()
+  const { validateGenres } = useValidation()
+  const [step, setStep] = useState<'context' | 'mood' | 'genres'>('context')
+
+  const handleContextSelect = (context: any) => {
+    actions.setWorkContext(context)
+    setStep('mood')
+  }
+
+  const handleMoodSelect = (mood: any) => {
+    actions.setMood(mood)
+    setStep('genres')
+  }
+
+  const handleGenreToggle = (genre: string) => {
+    actions.clearError() // Clear any previous errors
+    actions.toggleGenre(genre as GenreType) // ✅ CORRIGIDO: Cast para GenreType
+  }
+
+  const handleGenerate = () => {
+    // Final validation before generation
+    const genreValidation = validateGenres(state.selectedGenres)
+    if (!genreValidation.isValid) {
+      actions.setError(genreValidation.error!)
+      return
+    }
+    
+    actions.startGeneration()
+    actions.nextStep()
+  }
+
+  if (step === 'context') {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            What's your work vibe right now?
+          </h2>
+          <p className="text-purple-200">Choose the context that matches your current state</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MiniMixtapeCard
+            title="Deep Focus"
+            subtitle="FOCUS"
+            description="Coding, writing, analysis"
+            onClick={() => handleContextSelect('focus')}
+            variant="purple"
+          />
+          <MiniMixtapeCard
+            title="Creative Work"
+            subtitle="CREATE"
+            description="Design, brainstorm, ideation"
+            onClick={() => handleContextSelect('creative')}
+            variant="pink"
+          />
+          <MiniMixtapeCard
+            title="Admin Tasks"
+            subtitle="ADMIN"
+            description="Emails, planning, organizing"
+            onClick={() => handleContextSelect('admin')}
+            variant="blue"
+          />
+          <MiniMixtapeCard
+            title="Casual Browsing"
+            subtitle="BROWSE"
+            description="Research, reading, light work"
+            onClick={() => handleContextSelect('casual')}
+            variant="green"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'mood') {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            How's your energy today?
+          </h2>
+          <p className="text-purple-200">Select the mood that fits your current vibe</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MiniMixtapeCard
+            title="Calm & Focused"
+            subtitle="CALM"
+            description="Peaceful, steady concentration"
+            onClick={() => handleMoodSelect('calm')}
+            variant="blue"
+          />
+          <MiniMixtapeCard
+            title="Energetic & Motivated"
+            subtitle="ENERGY"
+            description="Upbeat, driving, powerful"
+            onClick={() => handleMoodSelect('energetic')}
+            variant="pink"
+          />
+          <MiniMixtapeCard
+            title="Ambient & Background"
+            subtitle="AMBIENT"
+            description="Atmospheric, unobtrusive"
+            onClick={() => handleMoodSelect('ambient')}
+            variant="purple"
+          />
+          <MiniMixtapeCard
+            title="Uplifting & Positive"
+            subtitle="UPLIFT"
+            description="Optimistic, inspiring, bright"
+            onClick={() => handleMoodSelect('uplifting')}
+            variant="green"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  const genreValidation = validateGenres(state.selectedGenres)
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-white mb-4">
+          Pick 2-3 genres you enjoy
+        </h2>
+        <p className="text-purple-200">Select the musical styles that resonate with you (max 5)</p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {POPULAR_GENRES.map((genre) => (
+          <Card 
+            key={genre}
+            className={`p-4 cursor-pointer transition-all duration-300 border-2 ${
+              state.selectedGenres.includes(genre)
+                ? 'border-purple-400 bg-gradient-to-br from-purple-600/50 to-pink-600/50'
+                : 'border-purple-500/30 hover:border-purple-400 bg-gradient-to-br from-purple-900/50 to-pink-900/30'
+            } backdrop-blur-sm ${
+              state.selectedGenres.length >= 5 && !state.selectedGenres.includes(genre)
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
+            onClick={() => handleGenreToggle(genre)}
+          >
+            <div className="text-center">
+              <div className="text-white font-medium capitalize">{genre}</div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Validation Messages */}
+      {state.error && (
+        <div className="text-center mb-4">
+          <div className="text-red-300 text-sm bg-red-900/20 border border-red-500/30 rounded-lg p-3 inline-block">
+            {state.error}
+          </div>
+        </div>
+      )}
+
+      {genreValidation.warning && !state.error && (
+        <div className="text-center mb-4">
+          <div className="text-yellow-300 text-sm bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 inline-block">
+            {genreValidation.warning}
+          </div>
+        </div>
+      )}
+
+      <div className="text-center">
+        <Button 
+          onClick={handleGenerate}
+          disabled={!canProceed}
+          className="px-8 py-3 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50"
+        >
+          Generate My Playlist
+        </Button>
+        
+        <p className="text-purple-300 text-sm mt-4">
+          {state.selectedGenres.length}/5 genres selected
+          {state.selectedGenres.length > 0 && (
+            <span className="block mt-1">
+              Selected: {state.selectedGenres.join(', ')}
+            </span>
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}

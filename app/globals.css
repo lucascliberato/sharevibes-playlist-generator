@@ -1,26 +1,115 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary Colors */
+  --primary-purple: #a238ff;
+  --primary-purple-dark: #8b00ff;
+  --primary-magenta: #ff006e;
+
+  /* Dark Theme */
+  --dark-bg: #0f0f23;
+  --dark-bg-secondary: #1a1a2e;
+  --dark-text: #e2e8f0;
+  --dark-text-secondary: #94a3b8;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Gradientes */
+  .bg-gradient-main {
+    background: linear-gradient(135deg, #ff006e, #a238ff);
+  }
+  
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #1a1a2e, #0f0f23);
+  }
+  
+  .bg-gradient-neon {
+    background: linear-gradient(90deg, #ff006e, #a238ff, #8b00ff);
+  }
+
+  /* Text com gradiente */
+  .text-gradient-neon {
+    @apply bg-gradient-neon bg-clip-text text-transparent;
+  }
+
+  /* Sombras neon */
+  .shadow-neon {
+    box-shadow: 0 0 20px rgba(162, 56, 255, 0.5), 0 0 40px rgba(162, 56, 255, 0.3);
+  }
+  
+  .shadow-tape {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Animações */
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  .animate-tape-spin {
+    animation: tape-spin 3s linear infinite;
+  }
+
+  /* Cassette specific styles */
+  .cassette-reel {
+    @apply w-4 h-4 bg-gray-800 rounded-full border border-gray-600;
+  }
+  
+  .cassette-reel-inner {
+    @apply w-2 h-2 bg-gray-600 rounded-full mx-auto mt-1;
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(162, 56, 255, 0.5);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(162, 56, 255, 0.8), 0 0 40px rgba(255, 0, 110, 0.3);
+  }
+}
+
+@keyframes tape-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-purple-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-purple-500;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  .text-4xl {
+    @apply text-3xl;
+  }
+  
+  .text-5xl {
+    @apply text-4xl;
+  }
 }

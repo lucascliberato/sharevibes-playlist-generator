@@ -1,0 +1,234 @@
+'use client'
+
+import { useApp } from '@/lib/app-context'
+import { CONTEXT_CONFIGS } from '@/constants'
+import type { PlaylistTrack, PlaylistMetadata, AppState, WorkContext, MoodType } from '@/types'
+
+export function useVibesAPI() {
+  const { state, actions } = useApp()
+
+  const generatePlaylist = async (): Promise<boolean> => {
+    try {
+      actions.clearError()
+      
+      // Validate before making API call
+      actions.validateCurrentStep()
+      if (state.error) {
+        return false
+      }
+      
+      // Start progress updates
+      const progressInterval = setInterval(() => {
+        actions.updateProgress(
+          Math.min(state.generationProgress + Math.random() * 15, 95),
+          Math.max(state.estimatedTimeLeft - 1, 1)
+        )
+      }, 1000)
+
+      console.log('🎵 Starting playlist generation...', {
+        path: state.selectedPath,
+        context: state.workContext,
+        genres: state.selectedGenres,
+        seedTracks: state.seedTracks.length
+      })
+
+      // ✅ CORRIGIDO: Preparar request data baseado no estado atual
+      const requestData = buildRequestPayload(state)
+
+      // ✅ CORRIGIDO: CALL HTTP REAL para o backend
+      const response = await fetch('/.netlify/functions/generatePlaylist', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      })
+
+      clearInterval(progressInterval)
+
+      console.log('📡 Backend response:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      console.log('✅ Playlist data received:', {
+        success: data.success,
+        playlistLength: data.playlist?.length,
+        method: data.method
+      })
+
+      // Validate response structure
+      if (!data.success || !data.playlist || !Array.isArray(data.playlist)) {
+        throw new Error('Invalid response format from backend')
+      }
+
+      // ✅ CORRIGIDO: Transform API response to our format
+      const playlist: PlaylistTrack[] = data.playlist.map((track: any) => ({
+        title: track.title || 'Unknown Title',
+        artist: track.artist || 'Unknown Artist',
+        albumCover: track.albumCover,
+        spotifyUrl: track.spotifyUrl,
+        youtubeUrl: track.youtubeUrl || `https://www.youtube.com/results?search_query=${encodeURIComponent(`${track.artist} ${track.title}`)}`
+      }))
+
+      const metadata: PlaylistMetadata = {
+        total_found: data.metadata?.total_found || playlist.length,
+        after_deduplication: data.metadata?.after_deduplication || playlist.length,
+        final_count: playlist.length,
+        path: state.selectedPath!,
+        method: data.metadata?.method || 'search_api'
+      }
+
+      console.log('✅ Playlist generated successfully:', {
+        tracks: playlist.length,
+        metadata
+      })
+
+      actions.generationSuccess(playlist, metadata)
+      actions.incrementMixtapeCount()
+      actions.nextStep()
+      
+      return true
+
+    } catch (error: any) {
+      console.error('❌ Playlist generation failed:', error)
+      
+      // Handle different types of errors
+      let errorMessage = 'Failed to generate playlist. Please try again.'
+      
+      if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'Network error. Please check your connection and try again.'
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again.'
+      } else if (error.message.includes('Invalid response')) {
+        errorMessage = 'Server error. Please try again in a moment.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      actions.generationError({ message: errorMessage })
+      return false
+    }
+  }
+
+  const collectEmail = async (email: string, contextPreference: string): Promise<boolean> => {
+    try {
+      actions.setEmailLoading(true)
+      actions.clearError()
+      
+      const requestData = {
+        email,
+        contextPreference,
+        playlistData: {
+          playlist: state.generatedPlaylist,
+          metadata: state.playlistMetadata
+        }
+      }
+
+      console.log('📧 Collecting email:', { email, contextPreference })
+
+      // ✅ CORRIGIDO: CALL HTTP REAL para coleta de email
+      const response = await fetch('/.netlify/functions/collectEmail', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('✅ Email collected successfully')
+        actions.emailCollectionSuccess(email)
+        return true
+      } else {
+        throw new Error(data.message || 'Failed to collect email')
+      }
+
+    } catch (error: any) {
+      console.error('❌ Email collection failed:', error)
+      
+      let errorMessage = 'Failed to collect email. Please try again.'
+      
+      if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
+        errorMessage = 'Network error. Please check your connection and try again.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      actions.emailCollectionError({ message: errorMessage })
+      return false
+    } finally {
+      actions.setEmailLoading(false)
+    }
+  }
+
+  const retryLastAction = async (): Promise<boolean> => {
+    console.log('🔄 Retrying last action...')
+    if (state.currentStep === 'generating') {
+      return await generatePlaylist()
+    }
+    return false
+  }
+
+  return {
+    playlist: {
+      generatePlaylist
+    },
+    email: {
+      collectEmail
+    },
+    retry: {
+      retryLastAction,
+      canRetry: !!state.error && state.currentStep === 'generating'
+    }
+  }
+}
+
+// ✅ CORRIGIDO: Helper function com tipos corretos
+function buildRequestPayload(state: AppState) {
+  const basePayload: any = {
+    path: state.selectedPath
+  }
+
+  // Apply context configurations
+  if (state.workContext && state.workContext in CONTEXT_CONFIGS) {
+    basePayload.context = { ...CONTEXT_CONFIGS[state.workContext as WorkContext] }
+  }
+
+  // Apply mood adjustments if selected
+  if (state.selectedMood && basePayload.context) {
+    const moodAdjustments: Record<MoodType, any> = {
+      'calm': { max_energy: 0.3, target_instrumentalness: 0.8 },
+      'energetic': { max_energy: 0.8, target_instrumentalness: 0.2 },
+      'ambient': { max_energy: 0.2, target_instrumentalness: 0.9 },
+      'uplifting': { max_energy: 0.7, target_danceability: 0.8 }
+    }
+    
+    if (state.selectedMood in moodAdjustments) {
+      Object.assign(basePayload.context, moodAdjustments[state.selectedMood])
+    }
+  }
+
+  // Path-specific data
+  if (state.selectedPath === 'quick') {
+    basePayload.genres = state.selectedGenres
+  } else if (state.selectedPath === 'precise') {
+    basePayload.seed_tracks = state.seedTracks.map(track => track.id)
+  }
+
+  console.log('📦 Request payload built:', basePayload)
+  return basePayload
+}
