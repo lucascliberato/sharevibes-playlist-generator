@@ -18,17 +18,22 @@ export const metadata: Metadata = {
   title: 'ShareVibes Playlist Generator - Create Your Perfect Mixtape',
   description: 'Generate personalized work playlists in 15 seconds with ShareVibes. Choose between Quick Mix or Precise Mix for the perfect soundtrack to your productivity.',
   keywords: 'playlist generator, work music, productivity playlist, mixtape, spotify playlist, focus music, ShareVibes',
+  
+  // 🔧 CONFIGURAÇÃO FAVICON MELHORADA
   icons: {
     icon: [
       {
-        url: '/favicon.svg',
-        type: 'image/svg+xml',
+        url: '/favicon.ico',
+        sizes: '32x32',
+        type: 'image/x-icon',
       },
       {
-        url: '/favicon.ico',
-        type: 'image/x-icon',
+        url: '/favicon.svg',
+        type: 'image/svg+xml',
+        sizes: 'any'
       }
     ],
+    shortcut: '/favicon.ico',
     apple: [
       {
         url: '/apple-touch-icon.png',
@@ -48,12 +53,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${vt323.variable}`}>
       <head>
-        {/* Additional favicon links for better compatibility */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        {/* 🔧 FAVICON LINKS MAIS ROBUSTOS */}
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#a238ff" />
+        
+        {/* 🔧 FORCE FAVICON REFRESH */}
+        <link rel="icon" href="/favicon.ico?v=2" />
       </head>
       <body className={`${spaceGrotesk.className} antialiased`}>
         <AppProvider>
