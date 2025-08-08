@@ -12,89 +12,50 @@ export function PlaylistGeneration() {
   const api = useVibesAPI()
 
   const generatePlaylist = useCallback(async () => {
-    console.log('🎵 generatePlaylist called')
-    console.log('📊 Current state:', {
-      isGenerating: state.isGenerating,
-      hasPlaylist: !!state.generatedPlaylist,
-      hasError: !!state.error,
-      currentStep: state.currentStep,
-      selectedPath: state.selectedPath,
-      workContext: state.workContext,
-      genresCount: state.selectedGenres.length,
-      seedTracksCount: state.seedTracks.length
-    })
+    console.log('🎵 generatePlaylist called from component')
     
-    try {
-      console.log('🔄 Starting API call...')
-      const success = await api.playlist.generatePlaylist()
-      console.log('📋 API call result:', success)
-      
-      if (success) {
-        console.log('✅ Success! Should navigate to results')
-      } else {
-        console.log('❌ Failed! Should show error state')
-      }
-    } catch (error) {
-      console.error('💥 Exception in generatePlaylist:', error)
+    const success = await api.playlist.generatePlaylist()
+    
+    if (success) {
+      console.log('✅ API returned success, playlist should be in state now')
+    } else {
+      console.log('❌ API returned failure, error should be displayed')
     }
-  }, [api, state])
+  }, [api.playlist])
 
-  // Log when component mounts/unmounts
+  // Single effect to start generation when component mounts
   useEffect(() => {
-    console.log('🏗️ PlaylistGeneration component mounted')
-    console.log('📊 Initial state:', {
+    console.log('🏗️ PlaylistGeneration mounted, checking if should start generation')
+    console.log('📊 Mount state:', {
       currentStep: state.currentStep,
       isGenerating: state.isGenerating,
       hasPlaylist: !!state.generatedPlaylist,
       hasError: !!state.error
     })
 
-    return () => {
-      console.log('🧹 PlaylistGeneration component unmounting')
-    }
-  }, [])
-
-  // Main effect to start generation
-  useEffect(() => {
-    console.log('🔄 Main effect triggered with state:', {
-      currentStep: state.currentStep,
-      isGenerating: state.isGenerating,
-      hasPlaylist: !!state.generatedPlaylist,
-      hasError: !!state.error
-    })
-
-    // Only start generation if conditions are met
-    if (!state.isGenerating && !state.generatedPlaylist && !state.error) {
-      console.log('✅ Conditions met, starting generation...')
+    // Only auto-start if we're on generating step and not already generating/complete
+    if (state.currentStep === 'generating' && !state.isGenerating && !state.generatedPlaylist && !state.error) {
+      console.log('✅ Starting generation automatically...')
       generatePlaylist()
     } else {
-      console.log('⏸️ Conditions NOT met for generation:', {
-        reasonIsGenerating: state.isGenerating,
-        reasonHasPlaylist: !!state.generatedPlaylist,
-        reasonHasError: !!state.error
+      console.log('⏸️ Not starting generation:', {
+        wrongStep: state.currentStep !== 'generating',
+        alreadyGenerating: state.isGenerating,
+        hasPlaylist: !!state.generatedPlaylist,
+        hasError: !!state.error
       })
     }
-  }, [generatePlaylist, state.isGenerating, state.generatedPlaylist, state.error])
+  }, []) // Only run on mount
 
-  // Effect to handle navigation after success
+  // Effect to navigate to results when playlist is ready
   useEffect(() => {
     if (state.generatedPlaylist && state.currentStep === 'generating') {
       console.log('🎯 Playlist ready, navigating to results...')
-      actions.setStep('results')
+      setTimeout(() => {
+        actions.setStep('results')
+      }, 1000) // Small delay to show 100% completion
     }
   }, [state.generatedPlaylist, state.currentStep, actions])
-
-  // Log state changes
-  useEffect(() => {
-    console.log('📊 State change detected:', {
-      currentStep: state.currentStep,
-      isGenerating: state.isGenerating,
-      progress: state.generationProgress,
-      timeLeft: state.estimatedTimeLeft,
-      error: state.error,
-      hasPlaylist: !!state.generatedPlaylist
-    })
-  }, [state.currentStep, state.isGenerating, state.generationProgress, state.error, state.generatedPlaylist])
 
   const handleRetry = () => {
     console.log('🔄 Manual retry triggered')
@@ -115,7 +76,8 @@ export function PlaylistGeneration() {
   return (
     <div className="max-w-2xl mx-auto py-12">
       <Card className="p-8 text-center bg-gradient-to-br from-purple-900/50 to-pink-900/30 backdrop-blur-sm border-2 border-purple-500/30">
-        {/* Debug Panel */}
+        
+        {/* Debug Panel - Temporary */}
         <div className="mb-6 p-4 bg-black/30 rounded text-left text-xs text-green-400 font-mono">
           <div className="text-green-300 font-bold mb-2">🔍 DEBUG INFO</div>
           <div>Current Step: {state.currentStep}</div>
@@ -167,11 +129,11 @@ export function PlaylistGeneration() {
               <div className="text-red-200 mb-2 font-medium">Error Details:</div>
               <div className="text-red-300 text-sm mb-4">{state.error}</div>
               
-              {state.error.includes('ECONNRESET') && (
+              {(state.error.includes('ECONNRESET') || state.error.includes('Failed to fetch')) && (
                 <div className="text-red-200 text-sm text-left">
                   <strong>🔧 Possible solutions:</strong>
                   <ul className="list-disc list-inside mt-2">
-                    <li>Check if Spotify credentials are valid</li>
+                    <li>Check if Spotify credentials are updated</li>
                     <li>Wait a moment and try again</li>
                     <li>Check your internet connection</li>
                   </ul>
@@ -194,15 +156,14 @@ export function PlaylistGeneration() {
                 ⬅️ Go Back
               </Button>
 
-              <Button
-                onClick={() => {
-                  console.log('🧪 Manual generation test')
-                  actions.startGeneration()
-                }}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-black text-sm"
-              >
-                🧪 Test Start
-              </Button>
+              {api.retry?.canRetry && (
+                <Button
+                  onClick={() => api.retry.retryLastAction()}
+                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-black text-sm"
+                >
+                  🔄 Retry API
+                </Button>
+              )}
             </div>
           </>
         ) : state.isGenerating ? (
@@ -235,25 +196,24 @@ export function PlaylistGeneration() {
             </div>
           </>
         ) : (
-          // INITIAL STATE (should trigger generation)
+          // INITIAL STATE (should start generation)
           <>
             <h2 className="text-3xl font-bold text-yellow-300 mb-4">
-              Initializing generation... ⚡
+              Preparing your playlist... ⚡
             </h2>
             
             <div className="mb-6 text-yellow-200">
-              Setting up your playlist generation...
+              Setting up the perfect mix for you...
             </div>
 
             <Button
               onClick={() => {
-                console.log('🚀 Manual start generation')
-                actions.startGeneration()
+                console.log('🚀 Manual start triggered')
                 generatePlaylist()
               }}
               className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500"
             >
-              🚀 Start Generation Manually
+              🚀 Start Generation
             </Button>
           </>
         )}

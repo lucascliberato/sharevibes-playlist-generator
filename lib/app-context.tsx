@@ -1,3 +1,4 @@
+// lib/app-context.tsx - Validation Fix
 'use client'
 
 import { createContext, useContext, useReducer, ReactNode } from 'react'
@@ -50,7 +51,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, selectedMood: action.payload, error: null }
     
     case 'SET_GENRES':
-      // Validate max 5 genres
       const validatedGenres = action.payload.slice(0, 5)
       return { ...state, selectedGenres: validatedGenres, error: null }
     
@@ -59,11 +59,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const isSelected = state.selectedGenres.includes(genre)
       
       if (isSelected) {
-        // Remove genre
         const newGenres = state.selectedGenres.filter(g => g !== genre)
         return { ...state, selectedGenres: newGenres, error: null }
       } else {
-        // Add genre with validation
         if (state.selectedGenres.length >= 5) {
           return { 
             ...state, 
@@ -75,12 +73,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     
     case 'SET_SEED_TRACKS':
-      // Validate max 3 seed tracks
       const validatedTracks = action.payload.slice(0, 3)
       return { ...state, seedTracks: validatedTracks, error: null }
     
     case 'ADD_SEED_TRACK':
-      // Validate max 3 seed tracks
       if (state.seedTracks.length >= 3) {
         return { 
           ...state, 
@@ -88,7 +84,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         }
       }
       
-      // Check for duplicate titles/artists
       const isDuplicate = state.seedTracks.some(track => 
         track.title.toLowerCase() === action.payload.title.toLowerCase() &&
         track.artist.toLowerCase() === action.payload.artist.toLowerCase()
@@ -115,6 +110,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     
     case 'START_GENERATION':
+      console.log('🎯 START_GENERATION action triggered')
       return { 
         ...state, 
         isGenerating: true, 
@@ -131,6 +127,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     
     case 'GENERATION_SUCCESS':
+      console.log('🎯 GENERATION_SUCCESS action triggered')
       return { 
         ...state, 
         isGenerating: false,
@@ -142,6 +139,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     
     case 'GENERATION_ERROR':
+      console.log('🎯 GENERATION_ERROR action triggered:', action.payload.message)
       return { 
         ...state, 
         isGenerating: false,
@@ -182,7 +180,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, error: null }
     
     case 'RESET_APP':
-      // Clear persisted data when resetting
       try {
         localStorage.removeItem('vibes_form_data')
         localStorage.removeItem('vibes_auto_save')
@@ -190,7 +187,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         console.warn('Failed to clear persisted data on reset:', error)
       }
       
-      // Preserve mixtape count when resetting
       return { 
         ...initialState, 
         mixtapeCount: state.mixtapeCount,
@@ -206,7 +202,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, hasUrlParams: true }
     
     case 'VALIDATE_CURRENT_STEP':
-      // Validate current step data and set appropriate errors
       const validation = validateStepData(state)
       return { ...state, error: validation.error }
     
@@ -215,7 +210,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-// Helper function to validate step data
+// IMPROVED validation function - less strict for generating step
 function validateStepData(state: AppState): { isValid: boolean; error: string | null } {
   switch (state.currentStep) {
     case 'path-selection':
@@ -249,9 +244,18 @@ function validateStepData(state: AppState): { isValid: boolean; error: string | 
       break
     
     case 'generating':
-      if (!state.isGenerating && !state.generatedPlaylist && !state.error) {
-        return { isValid: false, error: 'Generation process not started' }
+      // FIXED: More flexible validation for generating step
+      // Allow the step if we're currently generating OR if we have the required inputs
+      const hasRequiredInputs = state.selectedPath && state.workContext &&
+        ((state.selectedPath === 'quick' && state.selectedGenres.length > 0) ||
+         (state.selectedPath === 'precise' && state.seedTracks.length > 0))
+      
+      if (!hasRequiredInputs) {
+        return { isValid: false, error: 'Missing required playlist inputs' }
       }
+      
+      // Don't require isGenerating=true or generatedPlaylist to be valid
+      // The component will handle starting generation if needed
       break
     
     case 'results':
@@ -264,6 +268,7 @@ function validateStepData(state: AppState): { isValid: boolean; error: string | 
   return { isValid: true, error: null }
 }
 
+// Rest of the context code remains the same...
 const AppContext = createContext<{
   state: AppState
   dispatch: React.Dispatch<AppAction>
@@ -296,50 +301,31 @@ export function useAppActions() {
   const { dispatch } = context
 
   return {
-    // Navigation actions
     setStep: (step: AppState['currentStep']) => dispatch({ type: 'SET_STEP', payload: step }),
     nextStep: () => dispatch({ type: 'NEXT_STEP' }),
     prevStep: () => dispatch({ type: 'PREV_STEP' }),
-    
-    // Path and context actions
     setPath: (path: 'quick' | 'precise') => dispatch({ type: 'SET_PATH', payload: path }),
     setWorkContext: (context: WorkContext) => dispatch({ type: 'SET_WORK_CONTEXT', payload: context }),
     setMood: (mood: MoodType) => dispatch({ type: 'SET_MOOD', payload: mood }),
-    
-    // Genre actions (with validation)
     setGenres: (genres: GenreType[]) => dispatch({ type: 'SET_GENRES', payload: genres }),
     toggleGenre: (genre: GenreType) => dispatch({ type: 'TOGGLE_GENRE', payload: genre }),
-    
-    // Seed track actions (with validation)
     setSeedTracks: (tracks: SeedTrack[]) => dispatch({ type: 'SET_SEED_TRACKS', payload: tracks }),
     addSeedTrack: (track: SeedTrack) => dispatch({ type: 'ADD_SEED_TRACK', payload: track }),
     removeSeedTrack: (id: string) => dispatch({ type: 'REMOVE_SEED_TRACK', payload: id }),
-    
-    // Generation actions
     startGeneration: () => dispatch({ type: 'START_GENERATION' }),
     updateProgress: (progress: number, timeLeft: number) => dispatch({ type: 'UPDATE_PROGRESS', payload: { progress, timeLeft } }),
     generationSuccess: (playlist: PlaylistTrack[], metadata: PlaylistMetadata) => dispatch({ type: 'GENERATION_SUCCESS', payload: { playlist, metadata } }),
     generationError: (error: { message: string }) => dispatch({ type: 'GENERATION_ERROR', payload: error }),
-    
-    // Email collection actions
     showEmailForm: () => dispatch({ type: 'SHOW_EMAIL_FORM' }),
     hideEmailForm: () => dispatch({ type: 'HIDE_EMAIL_FORM' }),
     setEmailLoading: (loading: boolean) => dispatch({ type: 'SET_EMAIL_LOADING', payload: loading }),
     emailCollectionSuccess: (email: string) => dispatch({ type: 'EMAIL_COLLECTION_SUCCESS', payload: email }),
     emailCollectionError: (error: { message: string }) => dispatch({ type: 'EMAIL_COLLECTION_ERROR', payload: error }),
-    
-    // Error handling
     setError: (message: string) => dispatch({ type: 'SET_ERROR', payload: message }),
     clearError: () => dispatch({ type: 'CLEAR_ERROR' }),
-    
-    // App lifecycle
     resetApp: () => dispatch({ type: 'RESET_APP' }),
     incrementMixtapeCount: () => dispatch({ type: 'INCREMENT_MIXTAPE_COUNT' }),
-    
-    // URL params
     setUrlParamsProcessed: () => dispatch({ type: 'SET_URL_PARAMS_PROCESSED' }),
-    
-    // Validation
     validateCurrentStep: () => dispatch({ type: 'VALIDATE_CURRENT_STEP' })
   }
 }
@@ -369,7 +355,7 @@ export function useCanProceed() {
       }
     
     case 'generating':
-      return false
+      return false // Cannot proceed from generating step manually
     
     case 'results':
       return !!state.generatedPlaylist
@@ -382,7 +368,6 @@ export function useCanProceed() {
   }
 }
 
-// New validation hooks
 export function useValidation() {
   const state = useAppState()
   
