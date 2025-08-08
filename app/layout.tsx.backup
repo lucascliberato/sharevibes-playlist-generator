@@ -18,26 +18,6 @@ export const metadata: Metadata = {
   title: 'ShareVibes Playlist Generator - Create Your Perfect Mixtape',
   description: 'Generate personalized work playlists in 15 seconds with ShareVibes. Choose between Quick Mix or Precise Mix for the perfect soundtrack to your productivity.',
   keywords: 'playlist generator, work music, productivity playlist, mixtape, spotify playlist, focus music, ShareVibes',
-  icons: {
-    icon: [
-      {
-        url: '/favicon.svg',
-        type: 'image/svg+xml',
-      },
-      {
-        url: '/favicon.ico',
-        type: 'image/x-icon',
-      }
-    ],
-    apple: [
-      {
-        url: '/apple-touch-icon.png',
-        sizes: '180x180',
-        type: 'image/png',
-      }
-    ],
-  },
-  manifest: '/site.webmanifest',
 }
 
 export default function RootLayout({
@@ -47,14 +27,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${vt323.variable}`}>
-      <head>
-        {/* Additional favicon links for better compatibility */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#a238ff" />
-      </head>
       <body className={`${spaceGrotesk.className} antialiased`}>
         <AppProvider>
           {children}
