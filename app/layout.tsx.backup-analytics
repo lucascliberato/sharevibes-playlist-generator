@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk, VT323 } from 'next/font/google'
 import { AppProvider } from '@/lib/app-context'
-import { Analytics } from '@/components/Analytics'
 import './globals.css'
 
 const spaceGrotesk = Space_Grotesk({
@@ -20,6 +19,7 @@ export const metadata: Metadata = {
   description: 'Generate personalized work playlists in 15 seconds with ShareVibes. Choose between Quick Mix or Precise Mix for the perfect soundtrack to your productivity.',
   keywords: 'playlist generator, work music, productivity playlist, mixtape, spotify playlist, focus music, ShareVibes',
   
+  // 🔧 CONFIGURAÇÃO FAVICON MELHORADA
   icons: {
     icon: [
       {
@@ -53,18 +53,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${vt323.variable}`}>
       <head>
+        {/* 🔧 FAVICON LINKS MAIS ROBUSTOS */}
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#a238ff" />
+        
+        {/* 🔧 FORCE FAVICON REFRESH */}
         <link rel="icon" href="/favicon.ico?v=2" />
       </head>
       <body className={`${spaceGrotesk.className} antialiased`}>
-        {/* 📊 GOOGLE ANALYTICS */}
-        <Analytics />
-        
         <AppProvider>
           {children}
         </AppProvider>
