@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useApp } from '@/lib/app-context'
 import { useVibesAPI } from '@/hooks/use-api'
 import { Card } from '@/components/ui/Card'
@@ -10,19 +10,19 @@ export function PlaylistGeneration() {
   const { state } = useApp()
   const api = useVibesAPI()
 
-  useEffect(() => {
-    const generatePlaylist = async () => {
-      const success = await api.playlist.generatePlaylist()
-      if (!success && api.retry.canRetry) {
-        // Auto-retry once after 3 seconds
-        setTimeout(() => {
-          api.retry.retryLastAction()
-        }, 3000)
-      }
+  const generatePlaylist = useCallback(async () => {
+    const success = await api.playlist.generatePlaylist()
+    if (!success && api.retry.canRetry) {
+      // Auto-retry once after 3 seconds
+      setTimeout(() => {
+        api.retry.retryLastAction()
+      }, 3000)
     }
+  }, [api.playlist, api.retry])
 
+  useEffect(() => {
     generatePlaylist()
-  }, [])
+  }, [generatePlaylist])
 
   const getRandomMessage = () => {
     return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)]
@@ -88,7 +88,7 @@ export function PlaylistGeneration() {
 
         {/* Loading Message */}
         <div className="text-purple-200 italic">
-          "{getRandomMessage()}"
+          &ldquo;{getRandomMessage()}&rdquo;
         </div>
 
         {/* Error State */}

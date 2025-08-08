@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { SeedTrack, PlaylistTrack, PlaylistMetadata } from '@/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -21,7 +22,7 @@ export function validateGenres(genres: string[]) {
   }
 }
 
-export function validateSeedTracks(tracks: any[]) {
+export function validateSeedTracks(tracks: SeedTrack[]) {
   return {
     isValid: tracks.length >= 1 && tracks.length <= 3,
     errors: tracks.length === 0 ? ['At least one seed track is required'] : []
@@ -44,7 +45,7 @@ export function formatDuration(seconds: number): string {
 }
 
 // Storage utilities
-export function saveLastPlaylist(playlist: any[], metadata: any) {
+export function saveLastPlaylist(playlist: PlaylistTrack[], metadata: PlaylistMetadata) {
   try {
     const data = {
       playlist,

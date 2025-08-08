@@ -130,7 +130,7 @@ export function PlaylistResults() {
       <Card className="p-6 mb-8 bg-gradient-to-r from-purple-800/30 to-pink-800/30 backdrop-blur-sm border border-purple-500/30">
         <div className="text-center">
           <div className="text-purple-200 italic mb-2">
-            "Now it's so much easier to get the exact playlist I need"
+            &ldquo;Now it&apos;s so much easier to get the exact playlist I need&rdquo;
           </div>
           <div className="text-purple-300 text-sm">
             - Alex, Developer
@@ -145,7 +145,7 @@ export function PlaylistResults() {
         </h3>
         
         <div className="mb-6">
-          <div className="text-purple-200 mb-4">You'll get:</div>
+          <div className="text-purple-200 mb-4">You&apos;ll get:</div>
           <div className="space-y-2 text-purple-200 text-sm max-w-md mx-auto">
             <div>- Weekly work playlists for your taste</div>
             <div>- New music discovery through stories</div>

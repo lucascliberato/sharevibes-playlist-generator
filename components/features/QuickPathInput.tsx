@@ -5,8 +5,8 @@ import { useApp, useCanProceed, useValidation } from '@/lib/app-context'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { MiniMixtapeCard } from '@/components/ui/MiniMixtapeCard'
-import { CONTEXT_CONFIGS, AVAILABLE_GENRES, POPULAR_GENRES } from '@/constants'
-import type { GenreType } from '@/types' // ✅ ADICIONADO: Import do tipo
+import { POPULAR_GENRES } from '@/constants'
+import type { GenreType, WorkContext, MoodType } from '@/types'
 
 export function QuickPathInput() {
   const { state, actions } = useApp()
@@ -14,19 +14,19 @@ export function QuickPathInput() {
   const { validateGenres } = useValidation()
   const [step, setStep] = useState<'context' | 'mood' | 'genres'>('context')
 
-  const handleContextSelect = (context: any) => {
+  const handleContextSelect = (context: WorkContext) => {
     actions.setWorkContext(context)
     setStep('mood')
   }
 
-  const handleMoodSelect = (mood: any) => {
+  const handleMoodSelect = (mood: MoodType) => {
     actions.setMood(mood)
     setStep('genres')
   }
 
   const handleGenreToggle = (genre: string) => {
     actions.clearError() // Clear any previous errors
-    actions.toggleGenre(genre as GenreType) // ✅ CORRIGIDO: Cast para GenreType
+    actions.toggleGenre(genre as GenreType)
   }
 
   const handleGenerate = () => {
@@ -46,7 +46,7 @@ export function QuickPathInput() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-4">
-            What's your work vibe right now?
+            What&apos;s your work vibe right now?
           </h2>
           <p className="text-purple-200">Choose the context that matches your current state</p>
         </div>
@@ -90,7 +90,7 @@ export function QuickPathInput() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-4">
-            How's your energy today?
+            How&apos;s your energy today?
           </h2>
           <p className="text-purple-200">Select the mood that fits your current vibe</p>
         </div>

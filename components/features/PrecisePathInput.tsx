@@ -5,8 +5,8 @@ import { useApp, useCanProceed, useValidation } from '@/lib/app-context'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { CONTEXT_CONFIGS } from '@/constants'
 import { MiniMixtapeCard } from '@/components/ui/MiniMixtapeCard'
+import type { WorkContext } from '@/types'
 
 export function PrecisePathInput() {
   const { state, actions } = useApp()
@@ -36,7 +36,7 @@ export function PrecisePathInput() {
     actions.removeSeedTrack(id)
   }
 
-  const handleContextSelect = (context: any) => {
+  const handleContextSelect = (context: WorkContext) => {
     actions.setWorkContext(context)
   }
 
@@ -53,7 +53,6 @@ export function PrecisePathInput() {
   }
 
   if (step === 'seeds') {
-    const seedValidation = validateSeedTracks(state.seedTracks)
     const canAddMore = state.seedTracks.length < 3
 
     return (
@@ -62,7 +61,7 @@ export function PrecisePathInput() {
           <h2 className="text-3xl font-bold text-white mb-4">
             Your last 3 favorite songs
           </h2>
-          <p className="text-purple-200">Use songs you've been listening to recently for best personalization (max 3)</p>
+          <p className="text-purple-200">Use songs you&apos;ve been listening to recently for best personalization (max 3)</p>
         </div>
 
         <Card className="p-6 mb-6 bg-gradient-to-br from-purple-900/50 to-pink-900/30 backdrop-blur-sm border-2 border-purple-500/30">
@@ -149,9 +148,9 @@ export function PrecisePathInput() {
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-white mb-4">
           Based on your {state.seedTracks.length > 0 ? 'indie/bedroom pop' : ''} taste,<br />
-          what's your work context?
+          what&apos;s your work context?
         </h2>
-        <p className="text-purple-200">Choose how you'll be using this playlist</p>
+        <p className="text-purple-200">Choose how you&apos;ll be using this playlist</p>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

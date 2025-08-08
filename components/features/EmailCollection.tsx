@@ -20,7 +20,7 @@ export function EmailCollection() {
     if (prefillEmail) {
       setEmail(prefillEmail)
     }
-  }, [])
+  }, [getPrefillEmail])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

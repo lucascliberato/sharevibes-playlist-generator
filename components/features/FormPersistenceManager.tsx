@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
 export function FormPersistenceManager() {
-  const { state, actions } = useApp()
+  const { state } = useApp()
   const { hasPersistedData, clearPersistedData, getPersistedDataAge } = useFormPersistence()
   const { clearAutoSave } = useAutoSave()
   const [showRestorePrompt, setShowRestorePrompt] = useState(false)
@@ -23,7 +23,7 @@ export function FormPersistenceManager() {
         setShowRestorePrompt(true)
       }
     }
-  }, [])
+  }, [hasPersistedData, getPersistedDataAge, state.currentStep, state.hasUrlParams])
 
   const handleRestore = () => {
     // The useFormPersistence hook will handle the actual restoration

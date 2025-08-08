@@ -29,16 +29,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, currentStep: action.payload, error: null }
     
     case 'NEXT_STEP':
-      const stepOrder = ['path-selection', 'input-collection', 'generating', 'results', 'email-collection']
+      const stepOrder: AppState['currentStep'][] = ['path-selection', 'input-collection', 'generating', 'results', 'email-collection']
       const currentIndex = stepOrder.indexOf(state.currentStep)
       const nextStep = stepOrder[currentIndex + 1] || state.currentStep
-      return { ...state, currentStep: nextStep as any, error: null }
+      return { ...state, currentStep: nextStep, error: null }
     
     case 'PREV_STEP':
-      const prevStepOrder = ['path-selection', 'input-collection', 'generating', 'results', 'email-collection']
+      const prevStepOrder: AppState['currentStep'][] = ['path-selection', 'input-collection', 'generating', 'results', 'email-collection']
       const prevCurrentIndex = prevStepOrder.indexOf(state.currentStep)
       const prevStep = prevStepOrder[prevCurrentIndex - 1] || state.currentStep
-      return { ...state, currentStep: prevStep as any, error: null }
+      return { ...state, currentStep: prevStep, error: null }
     
     case 'SET_PATH':
       return { ...state, selectedPath: action.payload, error: null }

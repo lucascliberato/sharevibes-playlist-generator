@@ -1,7 +1,6 @@
 'use client'
 
 import { useApp } from '@/lib/app-context'
-import { Button } from '@/components/ui/Button'
 import { MixtapeCard } from '@/components/ui/MixtapeCard'
 
 export function PathSelection() {
