@@ -24,6 +24,8 @@ export function PlaylistResults() {
     actions.resetApp()
   }
 
+
+
   return (
     <div className="max-w-4xl mx-auto py-8">
       {/* Header */}
@@ -72,13 +74,10 @@ export function PlaylistResults() {
           <div className="text-white text-xl font-bold mb-2">
             {state.generatedPlaylist.length} songs • ~52 minutes
           </div>
-          <div className="flex justify-center gap-4">
-            <Button className="bg-green-600 hover:bg-green-500 text-white">
-              Open in Spotify
-            </Button>
-            <Button className="bg-red-600 hover:bg-red-500 text-white">
-              YouTube Playlist
-            </Button>
+          
+          {/* Individual song links available below */}
+          <div className="text-purple-300 text-sm">
+            Click on individual songs below to open in Spotify or YouTube
           </div>
         </div>
       </Card>
@@ -95,19 +94,31 @@ export function PlaylistResults() {
               <div className="text-purple-300 font-mono text-sm w-8">
                 {(index + 1).toString().padStart(2, '0')}.
               </div>
+              
+              {/* Album Cover (if available) */}
+              {track.albumCover && (
+                <img 
+                  src={track.albumCover} 
+                  alt={`${track.title} album cover`}
+                  className="w-10 h-10 rounded bg-purple-800/50 object-cover"
+                  loading="lazy"
+                />
+              )}
+              
               <div className="flex-1">
                 <div className="text-white font-medium">{track.title}</div>
                 <div className="text-purple-300 text-sm">{track.artist}</div>
               </div>
-              <div className="flex gap-2">
+              
+              <div className="flex gap-3">
                 {track.spotifyUrl && (
                   <a 
                     href={track.spotifyUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-green-400 hover:text-green-300 text-sm"
+                    className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded-full transition-colors"
                   >
-                    Spotify
+                    🎵 Spotify
                   </a>
                 )}
                 {track.youtubeUrl && (
@@ -115,9 +126,9 @@ export function PlaylistResults() {
                     href={track.youtubeUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-red-400 hover:text-red-300 text-sm"
+                    className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded-full transition-colors"
                   >
-                    YouTube
+                    📺 YouTube
                   </a>
                 )}
               </div>

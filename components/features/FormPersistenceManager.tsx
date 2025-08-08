@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
 export function FormPersistenceManager() {
+  // DISABLED: Return null to completely disable the restore session popup
+  return null
+
+  /* ORIGINAL CODE - Commented out to disable
   const { state } = useApp()
   const { hasPersistedData, clearPersistedData, getPersistedDataAge } = useFormPersistence()
   const { clearAutoSave } = useAutoSave()
@@ -96,4 +100,5 @@ export function FormPersistenceManager() {
       </Card>
     </div>
   )
+  */
 }
