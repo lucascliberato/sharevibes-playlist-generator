@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useApp } from '@/lib/app-context'
 import { useVibesAPI } from '@/hooks/use-api'
 import { Card } from '@/components/ui/Card'
@@ -10,42 +10,57 @@ import { LOADING_MESSAGES } from '@/constants'
 export function PlaylistGeneration() {
   const { state, actions } = useApp()
   const api = useVibesAPI()
+  const hasStartedGeneration = useRef(false)
 
   const generatePlaylist = useCallback(async () => {
     console.log('🎵 generatePlaylist called from component')
+    
+    // Mark that we've started to prevent duplicate calls
+    hasStartedGeneration.current = true
     
     const success = await api.playlist.generatePlaylist()
     
     if (success) {
       console.log('✅ API returned success, playlist should be in state now')
+      // Navigation will be handled by useEffect below
     } else {
-      console.log('❌ API returned failure, error should be displayed')
+      console.log('❌ API returned failure, allowing retry')
+      hasStartedGeneration.current = false // Allow retry
     }
   }, [api.playlist])
 
-  // Single effect to start generation when component mounts
+  // FIXED: Start generation when component mounts AND isGenerating is true but not started yet
   useEffect(() => {
     console.log('🏗️ PlaylistGeneration mounted, checking if should start generation')
     console.log('📊 Mount state:', {
       currentStep: state.currentStep,
       isGenerating: state.isGenerating,
       hasPlaylist: !!state.generatedPlaylist,
-      hasError: !!state.error
+      hasError: !!state.error,
+      hasStartedGeneration: hasStartedGeneration.current
     })
 
-    // Only auto-start if we're on generating step and not already generating/complete
-    if (state.currentStep === 'generating' && !state.isGenerating && !state.generatedPlaylist && !state.error) {
-      console.log('✅ Starting generation automatically...')
+    // FIXED LOGIC: Start generation if we're generating but haven't actually started the API call
+    const shouldStartGeneration = 
+      state.currentStep === 'generating' && 
+      state.isGenerating && 
+      !state.generatedPlaylist && 
+      !state.error && 
+      !hasStartedGeneration.current
+
+    if (shouldStartGeneration) {
+      console.log('✅ Starting generation - conditions met!')
       generatePlaylist()
     } else {
       console.log('⏸️ Not starting generation:', {
         wrongStep: state.currentStep !== 'generating',
-        alreadyGenerating: state.isGenerating,
+        notGenerating: !state.isGenerating,
         hasPlaylist: !!state.generatedPlaylist,
-        hasError: !!state.error
+        hasError: !!state.error,
+        alreadyStarted: hasStartedGeneration.current
       })
     }
-  }, []) // Only run on mount
+  }, [state.currentStep, state.isGenerating, state.generatedPlaylist, state.error, generatePlaylist])
 
   // Effect to navigate to results when playlist is ready
   useEffect(() => {
@@ -57,14 +72,23 @@ export function PlaylistGeneration() {
     }
   }, [state.generatedPlaylist, state.currentStep, actions])
 
+  // Reset the generation flag if we navigate away and back
+  useEffect(() => {
+    if (state.currentStep !== 'generating') {
+      hasStartedGeneration.current = false
+    }
+  }, [state.currentStep])
+
   const handleRetry = () => {
     console.log('🔄 Manual retry triggered')
+    hasStartedGeneration.current = false
     actions.clearError()
-    generatePlaylist()
+    actions.startGeneration() // This will trigger the useEffect above
   }
 
   const handleGoBack = () => {
     console.log('⬅️ Go back triggered')
+    hasStartedGeneration.current = false
     actions.clearError()
     actions.prevStep()
   }
@@ -87,6 +111,7 @@ export function PlaylistGeneration() {
           <div>Has Playlist: {state.generatedPlaylist ? 'YES' : 'NO'}</div>
           <div>Has Error: {state.error ? 'YES' : 'NO'}</div>
           <div>Error Message: {state.error || 'None'}</div>
+          <div>Has Started Generation: {hasStartedGeneration.current ? 'YES' : 'NO'}</div>
           <div>Can Retry: {api.retry?.canRetry ? 'YES' : 'NO'}</div>
           <div>Selected Path: {state.selectedPath}</div>
           <div>Work Context: {state.workContext}</div>
@@ -129,7 +154,7 @@ export function PlaylistGeneration() {
               <div className="text-red-200 mb-2 font-medium">Error Details:</div>
               <div className="text-red-300 text-sm mb-4">{state.error}</div>
               
-              {(state.error.includes('ECONNRESET') || state.error.includes('Failed to fetch')) && (
+              {(state.error.includes('ECONNRESET') || state.error.includes('Failed to fetch') || state.error.includes('Network error')) && (
                 <div className="text-red-200 text-sm text-left">
                   <strong>🔧 Possible solutions:</strong>
                   <ul className="list-disc list-inside mt-2">
@@ -161,7 +186,7 @@ export function PlaylistGeneration() {
                   onClick={() => api.retry.retryLastAction()}
                   className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-black text-sm"
                 >
-                  🔄 Retry API
+                  🔄 API Retry
                 </Button>
               )}
             </div>
@@ -194,6 +219,20 @@ export function PlaylistGeneration() {
             <div className="text-purple-200 italic">
               &ldquo;{getRandomMessage()}&rdquo;
             </div>
+
+            {/* Force Start Button for debugging */}
+            <div className="mt-6">
+              <Button
+                onClick={() => {
+                  console.log('🚀 Force start generation')
+                  hasStartedGeneration.current = false
+                  generatePlaylist()
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm"
+              >
+                🚀 Force Start (Debug)
+              </Button>
+            </div>
           </>
         ) : (
           // INITIAL STATE (should start generation)
@@ -203,13 +242,13 @@ export function PlaylistGeneration() {
             </h2>
             
             <div className="mb-6 text-yellow-200">
-              Setting up the perfect mix for you...
+              Ready to generate your perfect mix...
             </div>
 
             <Button
               onClick={() => {
-                console.log('🚀 Manual start triggered')
-                generatePlaylist()
+                console.log('🚀 Manual start generation')
+                actions.startGeneration()
               }}
               className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500"
             >
