@@ -226,40 +226,7 @@ function buildRequestPayload(state: AppState) {
   if (state.selectedPath === 'quick') {
     basePayload.genres = state.selectedGenres
   } else if (state.selectedPath === 'precise') {
-    // 🔧 CORREÇÃO: Converter precise path para quick path com gêneros inteligentes
-    
-    // Em vez de tentar adivinhar gêneros por artista,
-    // usar gêneros genéricos baseados no contexto de trabalho
-    const contextBasedGenres = {
-      'focus': ['ambient', 'instrumental', 'electronic', 'post-rock', 'neo-classical'],
-      'creative': ['indie', 'alternative', 'indie-pop', 'indie-rock', 'electronic'],
-      'admin': ['pop', 'indie-pop', 'electronic', 'alternative', 'indie'],
-      'casual': ['indie', 'pop', 'alternative', 'indie-pop', 'folk']
-    }
-    
-    // Pegar gêneros baseados no contexto, com fallback
-    const baseGenres = contextBasedGenres[state.workContext as WorkContext] || 
-                      ['indie', 'alternative', 'pop', 'electronic', 'rock']
-    
-    // Usar os gêneros baseados no contexto
-    basePayload.genres = baseGenres.slice(0, 5)
-    
-    // Forçar path como 'quick' para usar a lógica que funciona
-    basePayload.path = 'quick'
-    
-    // Adicionar informações das seed tracks no contexto para debugging
-    if (basePayload.context) {
-      basePayload.context.seed_info = state.seedTracks.map(track => 
-        `${track.artist} - ${track.title}`
-      ).join(', ')
-    }
-    
-    console.log('🎯 Precise path converted to context-based quick path:', {
-      originalSeedTracks: state.seedTracks.map(t => `${t.artist} - ${t.title}`),
-      workContext: state.workContext,
-      selectedGenres: basePayload.genres,
-      reasoning: `Used ${state.workContext} context to select appropriate genres`
-    })
+    basePayload.seed_tracks = state.seedTracks.map(track => track.id)
   }
 
   console.log('📦 Request payload built:', basePayload)
