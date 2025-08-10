@@ -3,7 +3,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useApp } from '@/lib/app-context'
 import { useVibesAPI } from '@/hooks/use-api'
-import { useAnalytics } from '@/hooks/use-analytics'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LOADING_MESSAGES } from '@/constants'
@@ -11,7 +10,6 @@ import { LOADING_MESSAGES } from '@/constants'
 export function PlaylistGeneration() {
   const { state, actions } = useApp()
   const api = useVibesAPI()
-  const { track } = useAnalytics()
   const hasStartedGeneration = useRef(false)
 
   const generatePlaylist = useCallback(async () => {
@@ -20,21 +18,16 @@ export function PlaylistGeneration() {
     // Mark that we've started to prevent duplicate calls
     hasStartedGeneration.current = true
     
-    // 📊 Track generation start
-    track.generationStarted()
-    
     const success = await api.playlist.generatePlaylist()
     
     if (success) {
       console.log('✅ API returned success, playlist should be in state now')
-      // Generation completion tracking will be handled in PlaylistResults component
+      // Navigation will be handled by useEffect below
     } else {
       console.log('❌ API returned failure, allowing retry')
-      // 📊 Track generation failure
-      track.generationFailed('api_call_failed')
       hasStartedGeneration.current = false // Allow retry
     }
-  }, [api.playlist, track])
+  }, [api.playlist])
 
   // FIXED: Start generation when component mounts AND isGenerating is true but not started yet
   useEffect(() => {
@@ -88,10 +81,6 @@ export function PlaylistGeneration() {
 
   const handleRetry = () => {
     console.log('🔄 Manual retry triggered')
-    
-    // 📊 Track retry attempt
-    track.generationFailed('user_retry_attempt')
-    
     hasStartedGeneration.current = false
     actions.clearError()
     actions.startGeneration() // This will trigger the useEffect above
@@ -99,22 +88,9 @@ export function PlaylistGeneration() {
 
   const handleGoBack = () => {
     console.log('⬅️ Go back triggered')
-    
-    // 📊 Track generation abandonment
-    track.generationFailed('user_abandoned')
-    
     hasStartedGeneration.current = false
     actions.clearError()
     actions.prevStep()
-  }
-
-  const handleManualStart = () => {
-    console.log('🚀 Manual start generation')
-    
-    // 📊 Track manual generation start
-    track.generationStarted()
-    
-    actions.startGeneration()
   }
 
   const getRandomMessage = () => {
@@ -238,7 +214,10 @@ export function PlaylistGeneration() {
             </div>
 
             <Button
-              onClick={handleManualStart}
+              onClick={() => {
+                console.log('🚀 Manual start generation')
+                actions.startGeneration()
+              }}
               className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500"
             >
               🚀 Start Generation

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useApp, useCanProceed, useValidation } from '@/lib/app-context'
-import { useAnalytics } from '@/hooks/use-analytics'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { MiniMixtapeCard } from '@/components/ui/MiniMixtapeCard'
@@ -11,19 +10,16 @@ import type { GenreType, WorkContext, MoodType } from '@/types'
 
 export function QuickPathInput() {
   const { state, actions } = useApp()
-  const { track } = useAnalytics()
   const canProceed = useCanProceed()
   const { validateGenres } = useValidation()
   const [step, setStep] = useState<'context' | 'mood' | 'genres'>('context')
 
   const handleContextSelect = (context: WorkContext) => {
-    track.workContextSelected(context) // 📊 Track work context selection
     actions.setWorkContext(context)
     setStep('mood')
   }
 
   const handleMoodSelect = (mood: MoodType) => {
-    track.moodSelected(mood) // 📊 Track mood selection
     actions.setMood(mood)
     setStep('genres')
   }
@@ -31,11 +27,6 @@ export function QuickPathInput() {
   const handleGenreToggle = (genre: string) => {
     actions.clearError() // Clear any previous errors
     actions.toggleGenre(genre as GenreType)
-    
-    // 📊 Track genre selection after state update
-    setTimeout(() => {
-      track.genresSelected(state.selectedGenres) // Track updated genres
-    }, 0)
   }
 
   const handleGenerate = () => {
@@ -46,7 +37,6 @@ export function QuickPathInput() {
       return
     }
     
-    // 📊 Track generation start (will be tracked by useAnalytics hook automatically)
     actions.startGeneration()
     actions.nextStep()
   }

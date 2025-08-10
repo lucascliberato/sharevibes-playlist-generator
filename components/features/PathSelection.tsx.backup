@@ -1,15 +1,12 @@
 'use client'
 
 import { useApp } from '@/lib/app-context'
-import { useAnalytics } from '@/hooks/use-analytics'
 import { MixtapeCard } from '@/components/ui/MixtapeCard'
 
 export function PathSelection() {
   const { actions } = useApp()
-  const { track } = useAnalytics()
 
   const handlePathSelect = (path: 'quick' | 'precise') => {
-    track.pathSelected(path) // 📊 Track path selection choice
     actions.setPath(path)
     actions.nextStep()
   }
