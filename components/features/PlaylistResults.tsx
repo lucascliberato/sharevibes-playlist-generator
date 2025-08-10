@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import Image from 'next/image'
 import { useApp } from '@/lib/app-context'
 import { useAnalytics } from '@/hooks/use-analytics'
 import { Card } from '@/components/ui/Card'
@@ -117,12 +116,11 @@ export function PlaylistResults() {
               
               {/* Album Cover (if available) */}
               {track.albumCover && (
-                <Image 
+                <img 
                   src={track.albumCover} 
                   alt={`${track.title} album cover`}
-                  width={40}
-                  height={40}
                   className="w-10 h-10 rounded bg-purple-800/50 object-cover"
+                  loading="lazy"
                 />
               )}
               
