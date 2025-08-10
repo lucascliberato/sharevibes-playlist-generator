@@ -24,9 +24,7 @@ export function PlaylistResults() {
     actions.resetApp()
   }
 
-  const handleDiscoverNewMusic = () => {
-    window.open('https://sharevibes.app', '_blank', 'noopener,noreferrer')
-  }
+
 
   return (
     <div className="max-w-4xl mx-auto py-8">
@@ -179,23 +177,12 @@ export function PlaylistResults() {
 
         <div className="border-t border-purple-500/30 pt-6">
           <div className="text-purple-200 mb-4">Or explore our ShareVibes music community:</div>
-          
-          {/* Updated section with both buttons side by side */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              onClick={handleRestart}
-              className="bg-transparent border border-purple-500 text-purple-300 hover:bg-purple-900/30 w-full sm:w-auto"
-            >
-              Create Another Playlist →
-            </Button>
-            
-            <Button 
-              onClick={handleDiscoverNewMusic}
-              className="bg-transparent border border-purple-500 text-purple-300 hover:bg-purple-900/30 w-full sm:w-auto"
-            >
-              Discover New Music →
-            </Button>
-          </div>
+          <Button 
+            onClick={handleRestart}
+            className="bg-transparent border border-purple-500 text-purple-300 hover:bg-purple-900/30"
+          >
+            Create Another Playlist →
+          </Button>
         </div>
       </Card>
     </div>
