@@ -21,7 +21,7 @@ const initialState: AppState = {
   emailCollected: false,
   error: null,
   hasUrlParams: false,
-  mixtapeCount: 2347 // ✅ FIX 1: Valor inicial mais realista
+  mixtapeCount: 15
 }
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -135,7 +135,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         estimatedTimeLeft: 0,
         generatedPlaylist: action.payload.playlist,
         playlistMetadata: action.payload.metadata,
-        mixtapeCount: state.mixtapeCount + 1, // ✅ FIX 2: Auto-increment no sucesso
         error: null
       }
     
@@ -195,8 +194,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     
     case 'INCREMENT_MIXTAPE_COUNT':
-      // ✅ FIX 3: Lógica simples - apenas +1
-      return { ...state, mixtapeCount: state.mixtapeCount + 1 }
+      const newCount = state.mixtapeCount + 1
+      const displayCount = Math.floor(newCount / 5) * 5 + (newCount % 5 === 0 ? 0 : 5)
+      return { ...state, mixtapeCount: displayCount }
     
     case 'SET_URL_PARAMS_PROCESSED':
       return { ...state, hasUrlParams: true }
