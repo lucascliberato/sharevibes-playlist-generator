@@ -6,7 +6,7 @@ import { useVibesAPI } from '@/hooks/use-api'
 import { useAnalytics } from '@/hooks/use-analytics'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { LOADING_MESSAGES } from '@/constants'
+import { getRandomLoadingMessage } from '@/constants'
 
 export function PlaylistGeneration() {
   const { state, actions } = useApp()
@@ -117,8 +117,9 @@ export function PlaylistGeneration() {
     actions.startGeneration()
   }
 
+  // FIXED: Use the helper function that handles the new LOADING_MESSAGES structure
   const getRandomMessage = () => {
-    return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)]
+    return getRandomLoadingMessage(state.workContext || undefined)
   }
 
   return (
@@ -140,7 +141,7 @@ export function PlaylistGeneration() {
               <div className="absolute inset-x-4 top-2 bottom-2 bg-black bg-opacity-40 rounded" />
               <div className="absolute inset-x-2 bottom-1 h-3 bg-white bg-opacity-95 rounded-sm flex items-center justify-center">
                 <div className="text-xs font-bold text-purple-800" style={{ fontSize: '8px' }}>
-                  sharevibes.app
+                  playlistgen.co
                 </div>
               </div>
             </div>

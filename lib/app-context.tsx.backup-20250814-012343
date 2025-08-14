@@ -1,18 +1,8 @@
-// lib/app-context.tsx - Updated with SeedArtists + Expanded Contexts
+// lib/app-context.tsx - Validation Fix
 'use client'
 
 import { createContext, useContext, useReducer, ReactNode } from 'react'
-import type { 
-  AppState, 
-  AppAction, 
-  WorkContext, 
-  MoodType, 
-  GenreType, 
-  SeedTrack, 
-  SeedArtist,
-  PlaylistTrack, 
-  PlaylistMetadata 
-} from '@/types'
+import type { AppState, AppAction, WorkContext, MoodType, GenreType, SeedTrack, PlaylistTrack, PlaylistMetadata } from '@/types'
 
 const initialState: AppState = {
   currentStep: 'path-selection',
@@ -20,11 +10,7 @@ const initialState: AppState = {
   workContext: null,
   selectedMood: null,
   selectedGenres: [],
-  
-  // Support both legacy and new formats during transition
   seedTracks: [],
-  seedArtists: [],
-  
   isGenerating: false,
   generationProgress: 0,
   estimatedTimeLeft: 0,
@@ -35,7 +21,7 @@ const initialState: AppState = {
   emailCollected: false,
   error: null,
   hasUrlParams: false,
-  mixtapeCount: 2347
+  mixtapeCount: 2347 // ✅ FIX 1: Valor inicial mais realista
 }
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -86,7 +72,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         return { ...state, selectedGenres: newGenres, error: null }
       }
     
-    // LEGACY SEED TRACKS (for backward compatibility)
     case 'SET_SEED_TRACKS':
       const validatedTracks = action.payload.slice(0, 3)
       return { ...state, seedTracks: validatedTracks, error: null }
@@ -99,12 +84,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         }
       }
       
-      const isDuplicateTrack = state.seedTracks.some(track => 
+      const isDuplicate = state.seedTracks.some(track => 
         track.title.toLowerCase() === action.payload.title.toLowerCase() &&
         track.artist.toLowerCase() === action.payload.artist.toLowerCase()
       )
       
-      if (isDuplicateTrack) {
+      if (isDuplicate) {
         return { 
           ...state, 
           error: 'This song is already in your seed tracks.' 
@@ -121,43 +106,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { 
         ...state, 
         seedTracks: state.seedTracks.filter(track => track.id !== action.payload),
-        error: null 
-      }
-    
-    // NEW SEED ARTISTS (for fixed Precise Path)
-    case 'SET_SEED_ARTISTS':
-      const validatedArtists = action.payload.slice(0, 3)
-      return { ...state, seedArtists: validatedArtists, error: null }
-    
-    case 'ADD_SEED_ARTIST':
-      if (state.seedArtists.length >= 3) {
-        return { 
-          ...state, 
-          error: 'Maximum 3 artists allowed. Remove one to add another.' 
-        }
-      }
-      
-      const isDuplicateArtist = state.seedArtists.some(artist => 
-        artist.name.toLowerCase() === action.payload.name.toLowerCase()
-      )
-      
-      if (isDuplicateArtist) {
-        return { 
-          ...state, 
-          error: 'This artist is already in your list.' 
-        }
-      }
-      
-      return { 
-        ...state, 
-        seedArtists: [...state.seedArtists, action.payload],
-        error: null 
-      }
-    
-    case 'REMOVE_SEED_ARTIST':
-      return { 
-        ...state, 
-        seedArtists: state.seedArtists.filter(artist => artist.name !== action.payload),
         error: null 
       }
     
@@ -187,7 +135,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         estimatedTimeLeft: 0,
         generatedPlaylist: action.payload.playlist,
         playlistMetadata: action.payload.metadata,
-        mixtapeCount: state.mixtapeCount + 1,
+        mixtapeCount: state.mixtapeCount + 1, // ✅ FIX 2: Auto-increment no sucesso
         error: null
       }
     
@@ -247,6 +195,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     
     case 'INCREMENT_MIXTAPE_COUNT':
+      // ✅ FIX 3: Lógica simples - apenas +1
       return { ...state, mixtapeCount: state.mixtapeCount + 1 }
     
     case 'SET_URL_PARAMS_PROCESSED':
@@ -261,7 +210,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-// UPDATED validation function - supports both seedTracks and seedArtists
+// IMPROVED validation function - less strict for generating step
 function validateStepData(state: AppState): { isValid: boolean; error: string | null } {
   switch (state.currentStep) {
     case 'path-selection':
@@ -272,7 +221,7 @@ function validateStepData(state: AppState): { isValid: boolean; error: string | 
     
     case 'input-collection':
       if (!state.workContext) {
-        return { isValid: false, error: 'Please select your context' }
+        return { isValid: false, error: 'Please select your work context' }
       }
       
       if (state.selectedPath === 'quick') {
@@ -285,26 +234,28 @@ function validateStepData(state: AppState): { isValid: boolean; error: string | 
       }
       
       if (state.selectedPath === 'precise') {
-        // Support both formats during transition
-        const hasSeeds = state.seedTracks.length > 0 || state.seedArtists.length > 0
-        if (!hasSeeds) {
-          return { isValid: false, error: 'Please add at least 1 artist' }
+        if (state.seedTracks.length === 0) {
+          return { isValid: false, error: 'Please add at least 1 seed track' }
         }
-        const totalSeeds = Math.max(state.seedTracks.length, state.seedArtists.length)
-        if (totalSeeds > 3) {
-          return { isValid: false, error: 'Maximum 3 artists allowed' }
+        if (state.seedTracks.length > 3) {
+          return { isValid: false, error: 'Maximum 3 seed tracks allowed' }
         }
       }
       break
     
     case 'generating':
+      // FIXED: More flexible validation for generating step
+      // Allow the step if we're currently generating OR if we have the required inputs
       const hasRequiredInputs = state.selectedPath && state.workContext &&
         ((state.selectedPath === 'quick' && state.selectedGenres.length > 0) ||
-         (state.selectedPath === 'precise' && (state.seedTracks.length > 0 || state.seedArtists.length > 0)))
+         (state.selectedPath === 'precise' && state.seedTracks.length > 0))
       
       if (!hasRequiredInputs) {
         return { isValid: false, error: 'Missing required playlist inputs' }
       }
+      
+      // Don't require isGenerating=true or generatedPlaylist to be valid
+      // The component will handle starting generation if needed
       break
     
     case 'results':
@@ -317,6 +268,7 @@ function validateStepData(state: AppState): { isValid: boolean; error: string | 
   return { isValid: true, error: null }
 }
 
+// Rest of the context code remains the same...
 const AppContext = createContext<{
   state: AppState
   dispatch: React.Dispatch<AppAction>
@@ -357,17 +309,9 @@ export function useAppActions() {
     setMood: (mood: MoodType) => dispatch({ type: 'SET_MOOD', payload: mood }),
     setGenres: (genres: GenreType[]) => dispatch({ type: 'SET_GENRES', payload: genres }),
     toggleGenre: (genre: GenreType) => dispatch({ type: 'TOGGLE_GENRE', payload: genre }),
-    
-    // Legacy seed tracks support
     setSeedTracks: (tracks: SeedTrack[]) => dispatch({ type: 'SET_SEED_TRACKS', payload: tracks }),
     addSeedTrack: (track: SeedTrack) => dispatch({ type: 'ADD_SEED_TRACK', payload: track }),
     removeSeedTrack: (id: string) => dispatch({ type: 'REMOVE_SEED_TRACK', payload: id }),
-    
-    // NEW seed artists support
-    setSeedArtists: (artists: SeedArtist[]) => dispatch({ type: 'SET_SEED_ARTISTS', payload: artists }),
-    addSeedArtist: (artist: SeedArtist) => dispatch({ type: 'ADD_SEED_ARTIST', payload: artist }),
-    removeSeedArtist: (name: string) => dispatch({ type: 'REMOVE_SEED_ARTIST', payload: name }),
-    
     startGeneration: () => dispatch({ type: 'START_GENERATION' }),
     updateProgress: (progress: number, timeLeft: number) => dispatch({ type: 'UPDATE_PROGRESS', payload: { progress, timeLeft } }),
     generationSuccess: (playlist: PlaylistTrack[], metadata: PlaylistMetadata) => dispatch({ type: 'GENERATION_SUCCESS', payload: { playlist, metadata } }),
@@ -405,14 +349,13 @@ export function useCanProceed() {
                state.selectedGenres.length > 0 && 
                state.selectedGenres.length <= 5
       } else {
-        // Support both legacy seedTracks and new seedArtists
-        const hasSeeds = state.seedTracks.length > 0 || state.seedArtists.length > 0
-        const totalSeeds = Math.max(state.seedTracks.length, state.seedArtists.length)
-        return !!state.workContext && hasSeeds && totalSeeds <= 3
+        return !!state.workContext && 
+               state.seedTracks.length > 0 && 
+               state.seedTracks.length <= 3
       }
     
     case 'generating':
-      return false
+      return false // Cannot proceed from generating step manually
     
     case 'results':
       return !!state.generatedPlaylist
@@ -451,17 +394,6 @@ export function useValidation() {
     return { isValid: true, error: null, warning: null }
   }
   
-  // NEW validation for seed artists
-  const validateSeedArtists = (artists: SeedArtist[]) => {
-    if (artists.length === 0) {
-      return { isValid: false, error: 'Please add at least 1 artist', warning: null }
-    }
-    if (artists.length > 3) {
-      return { isValid: false, error: 'Maximum 3 artists allowed', warning: null }
-    }
-    return { isValid: true, error: null, warning: null }
-  }
-  
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email) {
@@ -476,7 +408,6 @@ export function useValidation() {
   return {
     validateGenres,
     validateSeedTracks,
-    validateSeedArtists, // NEW validation function
     validateEmail,
     currentStepValidation: validateStepData(state)
   }

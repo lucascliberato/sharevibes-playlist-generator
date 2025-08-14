@@ -6,7 +6,7 @@ import { useAnalytics } from '@/hooks/use-analytics'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { MiniMixtapeCard } from '@/components/ui/MiniMixtapeCard'
-import { POPULAR_GENRES, CONTEXT_COPY, CONTEXT_CATEGORIES } from '@/constants'
+import { POPULAR_GENRES } from '@/constants'
 import type { GenreType, WorkContext, MoodType } from '@/types'
 
 export function QuickPathInput() {
@@ -17,7 +17,7 @@ export function QuickPathInput() {
   const [step, setStep] = useState<'context' | 'mood' | 'genres'>('context')
 
   const handleContextSelect = (context: WorkContext) => {
-    track.workContextSelected(context) // 📊 Track context selection
+    track.workContextSelected(context) // 📊 Track work context selection
     actions.setWorkContext(context)
     setStep('mood')
   }
@@ -53,60 +53,43 @@ export function QuickPathInput() {
 
   if (step === 'context') {
     return (
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          {/* FIXED: Updated copy - removed "work" to be more inclusive */}
           <h2 className="text-3xl font-bold text-white mb-4">
-            What&apos;s your vibe right now?
+            What&apos;s your work vibe right now?
           </h2>
-          <p className="text-purple-200">Choose the context that matches how you&apos;ll use this playlist</p>
+          <p className="text-purple-200">Choose the context that matches your current state</p>
         </div>
 
-        {/* WORK CONTEXTS */}
-        <div className="mb-10">
-          <h3 className="text-xl font-semibold text-white mb-6 text-center">
-            🏢 {CONTEXT_CATEGORIES.work.title}
-          </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {CONTEXT_CATEGORIES.work.contexts.map((context) => {
-              const copy = CONTEXT_COPY[context]
-              return (
-                <MiniMixtapeCard
-                  key={context}
-                  title={copy.title.split(' ').slice(1).join(' ')} // Remove emoji for cleaner look
-                  subtitle={context.toUpperCase()}
-                  description={copy.description}
-                  onClick={() => handleContextSelect(context)}
-                  variant="purple"
-                />
-              )
-            })}
-          </div>
-        </div>
-
-        {/* ACTIVITY CONTEXTS */}
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-white mb-6 text-center">
-            🎯 {CONTEXT_CATEGORIES.activity.title}
-          </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {CONTEXT_CATEGORIES.activity.contexts.map((context) => {
-              const copy = CONTEXT_COPY[context]
-              const variants = ['pink', 'blue', 'green', 'purple'] as const
-              const variant = variants[CONTEXT_CATEGORIES.activity.contexts.indexOf(context) % variants.length]
-              
-              return (
-                <MiniMixtapeCard
-                  key={context}
-                  title={copy.title.split(' ').slice(1).join(' ')} // Remove emoji
-                  subtitle={context.toUpperCase()}
-                  description={copy.description}
-                  onClick={() => handleContextSelect(context)}
-                  variant={variant}
-                />
-              )
-            })}
-          </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MiniMixtapeCard
+            title="Deep Focus"
+            subtitle="FOCUS"
+            description="Coding, writing, analysis"
+            onClick={() => handleContextSelect('focus')}
+            variant="purple"
+          />
+          <MiniMixtapeCard
+            title="Creative Work"
+            subtitle="CREATE"
+            description="Design, brainstorm, ideation"
+            onClick={() => handleContextSelect('creative')}
+            variant="pink"
+          />
+          <MiniMixtapeCard
+            title="Admin Tasks"
+            subtitle="ADMIN"
+            description="Emails, planning, organizing"
+            onClick={() => handleContextSelect('admin')}
+            variant="blue"
+          />
+          <MiniMixtapeCard
+            title="Casual Browsing"
+            subtitle="BROWSE"
+            description="Research, reading, light work"
+            onClick={() => handleContextSelect('casual')}
+            variant="green"
+          />
         </div>
       </div>
     )
@@ -151,16 +134,6 @@ export function QuickPathInput() {
             onClick={() => handleMoodSelect('uplifting')}
             variant="green"
           />
-        </div>
-
-        {/* Back Button */}
-        <div className="text-center mt-8">
-          <Button 
-            onClick={() => setStep('context')}
-            className="text-purple-300 hover:text-white bg-transparent hover:bg-purple-900/20"
-          >
-            ← Back to Context
-          </Button>
         </div>
       </div>
     )
@@ -233,16 +206,6 @@ export function QuickPathInput() {
             </span>
           )}
         </p>
-
-        {/* Back Button */}
-        <div className="mt-6">
-          <Button 
-            onClick={() => setStep('mood')}
-            className="text-purple-300 hover:text-white bg-transparent hover:bg-purple-900/20"
-          >
-            ← Back to Mood
-          </Button>
-        </div>
       </div>
     </div>
   )
