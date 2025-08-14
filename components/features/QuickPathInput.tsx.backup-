@@ -62,49 +62,48 @@ export function QuickPathInput() {
           <p className="text-purple-200">Choose the context that matches how you&apos;ll use this playlist</p>
         </div>
 
-        {/* WORK CONTEXTS - CHANGED TO SIMPLE CARDS */}
+        {/* WORK CONTEXTS */}
         <div className="mb-10">
           <h3 className="text-xl font-semibold text-white mb-6 text-center">
             🏢 {CONTEXT_CATEGORIES.work.title}
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {CONTEXT_CATEGORIES.work.contexts.map((context) => {
               const copy = CONTEXT_COPY[context]
               return (
-                <Card 
+                <MiniMixtapeCard
                   key={context}
-                  className="p-4 cursor-pointer transition-all duration-300 border-2 border-purple-500/30 hover:border-purple-400 bg-gradient-to-br from-purple-900/50 to-pink-900/30 backdrop-blur-sm hover:from-purple-800/60 hover:to-pink-800/40"
+                  title={copy.title.split(' ').slice(1).join(' ')} // Remove emoji for cleaner look
+                  subtitle={context.toUpperCase()}
+                  description={copy.description}
                   onClick={() => handleContextSelect(context)}
-                >
-                  <div className="text-center">
-                    <div className="text-white font-medium">{copy.title}</div>
-                    <div className="text-purple-300 text-sm mt-1">{copy.description}</div>
-                  </div>
-                </Card>
+                  variant="purple"
+                />
               )
             })}
           </div>
         </div>
 
-        {/* ACTIVITY CONTEXTS - CHANGED TO SIMPLE CARDS */}
+        {/* ACTIVITY CONTEXTS */}
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-white mb-6 text-center">
             🎯 {CONTEXT_CATEGORIES.activity.title}
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {CONTEXT_CATEGORIES.activity.contexts.map((context) => {
               const copy = CONTEXT_COPY[context]
+              const variants = ['pink', 'blue', 'green', 'purple'] as const
+              const variant = variants[CONTEXT_CATEGORIES.activity.contexts.indexOf(context) % variants.length]
+              
               return (
-                <Card 
+                <MiniMixtapeCard
                   key={context}
-                  className="p-4 cursor-pointer transition-all duration-300 border-2 border-purple-500/30 hover:border-purple-400 bg-gradient-to-br from-purple-900/50 to-pink-900/30 backdrop-blur-sm hover:from-purple-800/60 hover:to-pink-800/40"
+                  title={copy.title.split(' ').slice(1).join(' ')} // Remove emoji
+                  subtitle={context.toUpperCase()}
+                  description={copy.description}
                   onClick={() => handleContextSelect(context)}
-                >
-                  <div className="text-center">
-                    <div className="text-white font-medium">{copy.title}</div>
-                    <div className="text-purple-300 text-sm mt-1">{copy.description}</div>
-                  </div>
-                </Card>
+                  variant={variant}
+                />
               )
             })}
           </div>
